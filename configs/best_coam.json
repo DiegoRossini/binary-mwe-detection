@@ -1,0 +1,16 @@
+{
+  "model": "DLT+lo",
+  "encoder": "microsoft/deberta-v3-large",
+  "lr": 3e-5,
+  "batch_size": 16,
+  "epochs": 10,
+  "dropout": 0.3,
+  "weight_decay": 0.01,
+  "patience": 3,
+  "seed": 42,
+  "oversample_ratio": 0.30,
+  "window_max": 13,
+  "max_member_len": 6,
+  "thresholds": [0.50, 0.60, 0.20],
+  "test_f1": 0.698
+}
