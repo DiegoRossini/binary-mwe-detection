@@ -1,63 +1,74 @@
-# Binary MWE Detection
+---
+language: en
+license: mit
+tags:
+  - multiword-expressions
+  - mwe
+  - token-classification
+  - deberta
+  - nlp
+datasets:
+  - yusuke196/CoAM
+metrics:
+  - f1
+pipeline_tag: token-classification
+---
 
-Code for "Binary Token-Level Classification with DeBERTa for All-Type MWE Identification" (EACL 2026 Findings).
+# Binary MWE Detection (DLT+lo)
+
+DeBERTa-v3-large fine-tuned for multiword expression identification using binary token-level classification. Handles both **continuous** and **discontinuous** MWEs.
+
+**Paper:** "Binary Token-Level Classification with DeBERTa for All-Type MWE Identification" (EACL 2026 Findings)
 
 ## Results
 
-| Model | F1 |
-|-------|-----|
-| DLT+lo (ours) | 69.8% |
-| Qwen-72B | 57.8% |
+| Model | Overall F1 | Continuous F1 | Discontinuous F1 |
+|-------|------------|---------------|------------------|
+| **DLT+lo (this)** | **69.8%** | **72.1%** | **53.8%** |
+| Qwen-72B | 57.8% | — | — |
 
-## Setup
+## Installation
 
 ```bash
-pip install -r requirements.txt
+pip install transformers torch spacy networkx
 python -m spacy download en_core_web_lg
 ```
 
-## Inference
+## Usage
 
-```bash
-python inference.py "I'm looking forward to the meeting."
-python inference.py --model outputs/model.safetensors "He kicked the bucket last night."
+```python
+from transformers import AutoModel
+
+model = AutoModel.from_pretrained("DiegoRossini/mwe-detection-deberta", trust_remote_code=True)
+
+# Continuous MWE
+mwes = model.detect("They made up their minds.")
+print(mwes)  # ['made up']
+
+# Discontinuous MWE
+mwes = model.detect("I ran into an old friend yesterday.")
+print(mwes)  # ['ran into']
+
+# With detailed output
+mwes = model.detect("He kicked the bucket last night.", return_details=True)
 ```
+
+## Thresholds
+
+Default thresholds (start, end, inside): `(0.5, 0.6, 0.2)`
+
+Adjust based on your precision/recall needs:
+- Lower thresholds → more MWEs detected (higher recall)
+- Higher thresholds → fewer but more confident MWEs (higher precision)
 
 ## Training
 
-```bash
-# 1. Download CoAM
-export HF_TOKEN=your_token
-python scripts/download_dataset.py
+Trained on [CoAM](https://huggingface.co/datasets/yusuke196/CoAM) with:
+- Encoder: DeBERTa-v3-large
+- Linguistic features: NP chunking, dependency distances
+- Data augmentation: 30% oversampling
 
-# 2. Generate projections
-python scripts/generate_projections.py
-
-# 3. Train
-python main.py
-```
-
-## Structure
-
-```
-├── main.py           # Training
-├── inference.py      # Single-text inference
-├── src/
-│   ├── config.py
-│   ├── data.py
-│   ├── model.py
-│   ├── train.py
-│   ├── evaluate.py
-│   └── features.py
-└── scripts/
-    ├── download_dataset.py
-    ├── generate_projections.py
-    └── run_training.sh
-```
-
-## Models
-
-Pretrained: [huggingface.co/DiegoRossini](https://huggingface.co/DiegoRossini)
+Code: [github.com/DiegoRossini/binary-mwe-detection](https://github.com/DiegoRossini/binary-mwe-detection)
 
 ## Citation
 
@@ -69,7 +80,3 @@ Pretrained: [huggingface.co/DiegoRossini](https://huggingface.co/DiegoRossini)
     year = "2026"
 }
 ```
-
-## License
-
-MIT
